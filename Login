@@ -1,0 +1,36 @@
+if state == "auth":
+    if auth_type is None:
+        # Choosing login type
+        draw("Drift in the Dark", WIDTH//2, 60)
+        draw("1. Creator", WIDTH//2, 150)
+        draw("2. Normal User", WIDTH//2, 200)
+        draw("Press 1 or 2", WIDTH//2, 260)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_1:
+                auth_type = "creator"
+                password = ""
+            elif event.key == pygame.K_2:
+                auth_type = "user"
+                email = username = password = ""
+                mode = "signin"
+    elif auth_type == "creator":
+        draw("Creator Login", WIDTH//2, 60)
+        draw(f"Password: {'*'*len(password)}", WIDTH//2, 150)
+        draw("Enter the secret password", WIDTH//2, 200)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                if password == creator_password:
+                    creator_logged_in = True
+                    state = "creator_panel"
+                else:
+                    creator_error = "Incorrect password"
+                password = ""
+            elif event.key == pygame.K_BACKSPACE:
+                password = password[:-1]
+            else:
+                password += event.unicode
+        if creator_error:
+            draw(creator_error, WIDTH//2, 250)
+    elif auth_type == "user":
+        # Normal login/signup flow (existing code)
+        # Keep everything as-is under this branch
