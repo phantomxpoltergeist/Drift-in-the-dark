@@ -1,0 +1,4 @@
+for o in opponents:
+    if player_score > o["best_run"] and o["best_run"] - player_score <= 10:
+        users[current_user]["best_run"], o["best_run"] = o["best_run"], player_score
+        break  # Only swap with one opponent per match
