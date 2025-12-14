@@ -1,0 +1,3 @@
+creator_state = "main"  # main, user_menu, search
+search_query = ""
+selected_user = None
