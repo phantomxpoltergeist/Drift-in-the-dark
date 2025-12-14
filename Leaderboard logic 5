@@ -1,0 +1,10 @@
+board = sorted(
+    [(v["username"], v["stats"]["wins"], v["stats"]["losses"], v["stats"]["time_played"]) 
+     for k,v in users.items() if k != "_meta"],
+    key=lambda x: x[1], reverse=True  # sort by wins
+)
+
+y = 120
+for i, (n, wins, losses, time_played) in enumerate(board[:8]):
+    draw(f"{i+1}. {n} — W:{wins} L:{losses} Time:{time_played//60}m", WIDTH//2, y)
+    y += 30
