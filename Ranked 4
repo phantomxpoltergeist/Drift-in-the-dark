@@ -1,0 +1,2 @@
+opponents = get_ranked_opponents(current_user)
+top_opponent = opponents[0]  # Pick the closest stronger opponent
