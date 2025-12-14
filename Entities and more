@@ -1,0 +1,167 @@
+# ================= Entities =================
+class Enemy:
+    def __init__(self,level):
+        self.rect = pygame.Rect(random.randint(0,WIDTH-ENEMY_SIZE),
+                                random.randint(0,HEIGHT-ENEMY_SIZE),
+                                ENEMY_SIZE, ENEMY_SIZE)
+        self.vx,self.vy=random.uniform(-1,1),random.uniform(-1,1)
+        self.memory = pygame.Vector2()
+        self.speed = 1.5 + level*0.15
+        self.focus = min(0.05 + level*0.01,0.25)
+
+    def update(self,player,delta):
+        self.memory=self.memory.lerp(delta,self.focus)
+        dx=(player.centerx-self.rect.centerx)+self.memory.x*20
+        dy=(player.centery-self.rect.centery)+self.memory.y*20
+        d=math.hypot(dx,dy)
+        if d: dx,dy=dx/d,dy/d
+        self.vx=self.vx*0.9 + dx*self.focus*2
+        self.vy=self.vy*0.9 + dy*self.focus*2
+        self.vx,self.vy=clamp(self.vx,self.vy,self.speed)
+        self.rect.x+=self.vx
+        self.rect.y+=self.vy
+        self.rect.clamp_ip(screen.get_rect())
+
+class Boss:
+    def __init__(self,level):
+        self.rect = pygame.Rect(WIDTH//2-80,HEIGHT//2-80,160,160)
+        self.speed=2+level*0.05
+        self.timer=0
+    def update(self,player):
+        dx=player.centerx-self.rect.centerx
+        dy=player.centery-self.rect.centery
+        d=math.hypot(dx,dy)
+        if d: dx,dy=dx/d,dy/d
+        self.rect.x+=dx*self.speed
+        self.rect.y+=dy*self.speed
+
+class PowerUp:
+    def __init__(self):
+        self.kind = random.choice(["speed","shield","score"])
+        self.level = random.randint(1,3)
+        self.rect = pygame.Rect(random.randint(0,WIDTH-20), random.randint(0,HEIGHT-20), 20, 20)
+    def apply(self,player_state):
+        if self.kind=="speed":
+            player_state["speed"]*=1+0.3*self.level
+            player_state["speed_timer"]=pygame.time.get_ticks()+5000*self.level
+        elif self.kind=="shield":
+            player_state["shield"]=True
+            player_state["shield_strength"]=self.level
+        elif self.kind=="score":
+            player_state["score"]+=10*self.level
+
+# ================= Maps =================
+maps = {
+    1: [pygame.Rect(100,100,50,200), pygame.Rect(400,300,50,150)],
+    2: [pygame.Rect(50,50,80,80), pygame.Rect(500,100,60,250)],
+    3: [pygame.Rect(200,150,150,50), pygame.Rect(350,350,50,100)],
+    4: [pygame.Rect(120,200,60,200), pygame.Rect(450,100,100,50)],
+    5: [pygame.Rect(80,80,80,300), pygame.Rect(300,300,200,60)]
+}
+
+# ================= Game States =================
+state="menu" # menu, auth, level_select, pregame, playing, game_over
+mode = None  # single, multiplayer, ranked
+selected_map = 1
+timer_setting = 60
+points_to_win = 50
+
+# Player
+player = pygame.Rect(WIDTH//2, HEIGHT//2, PLAYER_SIZE, PLAYER_SIZE)
+player_state = {"speed": PLAYER_SPEED, "speed_timer":0, "shield":False, "shield_strength":0, "score":0}
+enemies = []
+boss = None
+powerups = []
+
+# Timer
+game_start_time = 0
+
+# ================= Main Loop =================
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+        if state=="menu":
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_1: mode="single"; state="pregame"
+                elif event.key==pygame.K_2: mode="multiplayer"; state="pregame"
+                elif event.key==pygame.K_3: mode="ranked"; state="pregame"
+        elif state=="pregame":
+            if event.type==pygame.KEYDOWN:
+                # Map selection 1-5
+                if event.unicode in "12345":
+                    selected_map=int(event.unicode)
+                # Timer selection keys T/Y for +/-10s
+                elif event.key==pygame.K_t: timer_setting+=10
+                elif event.key==pygame.K_y: timer_setting=max(10,timer_setting-10)
+                # Points selection keys P/O for +/-10
+                elif event.key==pygame.K_p: points_to_win+=10
+                elif event.key==pygame.K_o: points_to_win=max(10,points_to_win-10)
+                elif event.key==pygame.K_RETURN:
+                    state="playing"
+                    player.topleft=(WIDTH//2,HEIGHT//2)
+                    enemies.clear()
+                    powerups.clear()
+                    boss=None
+                    player_state={"speed":PLAYER_SPEED,"speed_timer":0,"shield":False,"shield_strength":0,"score":0}
+                    game_start_time=pygame.time.get_ticks()
+
+    # ================= DRAW =================
+    screen.fill(BG)
+    if state=="menu":
+        draw("Select Mode", WIDTH//2, 100)
+        draw("1. Single Player", WIDTH//2, 160)
+        draw("2. Multiplayer", WIDTH//2, 200)
+        draw("3. Ranked", WIDTH//2, 240)
+    elif state=="pregame":
+        draw("Pregame Settings", WIDTH//2, 60)
+        draw(f"Select Map (1-5): {selected_map}", WIDTH//2, 120)
+        draw(f"Timer (T/Y +/-10s): {timer_setting}", WIDTH//2, 160)
+        draw(f"Points to Win (P/O +/-10): {points_to_win}", WIDTH//2, 200)
+        draw("Press ENTER to start", WIDTH//2, 260)
+        # Draw map preview
+        for ob in maps[selected_map]:
+            pygame.draw.rect(screen,(100,100,100),ob)
+    elif state=="playing":
+        # Player movement
+        keys=pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]: player.x-=player_state["speed"]
+        if keys[pygame.K_RIGHT]: player.x+=player_state["speed"]
+        if keys[pygame.K_UP]: player.y-=player_state["speed"]
+        if keys[pygame.K_DOWN]: player.y+=player_state["speed"]
+        player.clamp_ip(screen.get_rect())
+        # Draw map obstacles
+        for ob in maps[selected_map]:
+            pygame.draw.rect(screen,(100,100,100),ob)
+        # Draw enemies
+        for e in enemies:
+            e.update(player, pygame.Vector2(player.center))
+            pygame.draw.rect(screen,ENEMY_COLOR,e.rect)
+            if e.rect.colliderect(player):
+                state="game_over"
+        # Spawn powerups
+        if random.random()<0.01:
+            powerups.append(PowerUp())
+        for p in powerups:
+            pygame.draw.rect(screen,POWERUP_COLORS[p.kind],p.rect)
+            draw(f"L{p.level}",p.rect.centerx,p.rect.centery)
+            if p.rect.colliderect(player):
+                p.apply(player_state)
+                powerups.remove(p)
+        # Draw player
+        pygame.draw.rect(screen,PLAYER_COLOR,player)
+        # Timer
+        elapsed=(pygame.time.get_ticks()-game_start_time)//1000
+        draw(f"Time: {elapsed}/{timer_setting}",WIDTH-80,20,center=False)
+        draw(f"Score: {player_state['score']}/{points_to_win}",WIDTH-80,50,center=False)
+        if elapsed>=timer_setting or player_state['score']>=points_to_win:
+            state="game_over"
+    elif state=="game_over":
+        draw("Game Over",WIDTH//2,HEIGHT//2-20)
+        draw("Press any key to return to menu",WIDTH//2,HEIGHT//2+20)
+        for event in pygame.event.get():
+            if event.type==pygame.KEYDOWN:
+                state="menu"
+
+    pygame.display.flip()
+    clock.tick(60)
