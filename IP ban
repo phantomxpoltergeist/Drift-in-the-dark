@@ -7,3 +7,7 @@ users[email] = {
     "best_run": 0,
     "ip": "127.0.0.1",  # placeholder IP, you can set dynamically
     "banned": False
+u = users.get(email)
+if u and u.get("banned"):
+    error = "This account is banned"
+    continue
