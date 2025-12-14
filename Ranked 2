@@ -1,0 +1,18 @@
+if state == "ranked_matchmaking":
+    draw("Ranked Matchmaking...", WIDTH//2, 100)
+    opponents = get_ranked_opponents(current_user)
+    y = 160
+    for o in opponents:
+        draw(f"{o['username']} — Best Run: {o['best_run']}", WIDTH//2, y)
+        y += 40
+    draw("Press Enter to start the match", WIDTH//2, y+20)
+    
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                # Start the game
+                state = "playing"
+                level = users[current_user]["max_level"] * 5
+                enemies.clear()
+                boss = None
+                frames = 0
