@@ -1,0 +1,41 @@
+elif state == "creator_panel":
+    if creator_state == "main":
+        draw("Creator Panel", WIDTH//2, 60)
+        draw("1. User Menu", WIDTH//2, 120)
+        draw("Q. Quit to Auth", WIDTH//2, 160)
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_1]:
+            creator_state = "user_menu"
+            search_query = ""
+            selected_user = None
+        elif keys[pygame.K_q]:
+            state = "auth"
+            auth_type = None
+
+    elif creator_state == "user_menu":
+        draw("User Menu - Type to Search", WIDTH//2, 60)
+        draw(f"Search: {search_query}", WIDTH//2, 100)
+        y = 140
+        filtered_users = [
+            (k,u) for k,u in users.items() if k != "_meta" and search_query.lower() in u["username"].lower()
+        ]
+        for idx, (k,u) in enumerate(filtered_users):
+            draw(f"{idx+1}. {u['username']} — IP: {u['ip']} — {'BANNED' if u['banned'] else 'ACTIVE'}", WIDTH//2, y)
+            y += 30
+
+        draw("Enter number to toggle ban | ESC to go back", WIDTH//2, HEIGHT-40)
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    creator_state = "main"
+                elif event.unicode.isdigit():
+                    num = int(event.unicode) - 1
+                    if 0 <= num < len(filtered_users):
+                        k, u = filtered_users[num]
+                        u["banned"] = not u["banned"]
+                        save_users(users)
+                elif event.key == pygame.K_BACKSPACE:
+                    search_query = search_query[:-1]
+                elif len(event.unicode) == 1 and event.unicode.isprintable():
+                    search_query += event.unicode
