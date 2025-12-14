@@ -1,0 +1,13 @@
+ When creating a new user
+users[email] = {
+    "username": username or email.split("@")[0],
+    "salt": salt,
+    "password": hash_password(password, salt),
+    "max_level": 1,
+    "best_run": 0,
+    "ip": "127.0.0.1",  # placeholder IP
+    "banned": False,
+    "social": {  # New social media section
+        "youtube": "",
+        "discord": "",
+        "twitch": ""
