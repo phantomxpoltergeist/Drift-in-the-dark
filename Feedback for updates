@@ -1,0 +1,3 @@
+# At the start of auth, show recommendation
+draw("Send suggestions or feedback to:", WIDTH//2, 400)
+draw("yungchrypto@gmail.com", WIDTH//2, 430)
