@@ -1,0 +1,4 @@
+# Scale enemy difficulty based on top opponent's best_run
+top_opponent_score = max([o["best_run"] for o in opponents] + [0])
+level = users[current_user]["max_level"] * 5
+level += top_opponent_score // 10  # Increase level based on opponent
