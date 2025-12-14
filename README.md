@@ -1,2 +1,2 @@
 # Drift-in-the-dark
-A infinite game
+An infinite game
