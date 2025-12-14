@@ -1,0 +1,2 @@
+elapsed_time = (pygame.time.get_ticks() - game_start_time) // 1000  # convert to seconds
+users[current_user]["stats"]["time_played"] += elapsed_time
