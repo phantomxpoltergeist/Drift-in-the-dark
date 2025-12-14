@@ -1,0 +1,120 @@
+# =========================================================
+# ======================= CONSTANTS =======================
+# =========================================================
+
+PLAYER_SIZE = 40
+PLAYER_SPEED = 5
+STAR_SIZE = 20
+ENEMY_SIZE = 35
+
+MAX_SPEED_TOLERANCE = PLAYER_SPEED * 1.6
+
+# =========================================================
+# ======================= HELPERS =========================
+# =========================================================
+
+def draw(text, x, y, center=True):
+    surf = font.render(text, True, TEXT)
+    rect = surf.get_rect()
+    rect.center = (x, y) if center else rect.move(x, y)
+    screen.blit(surf, rect)
+
+def clamp(vx, vy, m):
+    mag = math.hypot(vx, vy)
+    if mag == 0:
+        return 0, 0
+    s = min(1, m / mag)
+    return vx * s, vy * s
+
+def generate_boss_dialogue():
+    return " ".join([
+        random.choice([
+            "I remember your hesitation.",
+            "You should not have come this far.",
+            "Your movement betrays you.",
+            "I have learned your rhythm."
+        ]),
+        random.choice([
+            "Patterns decay.",
+            "You repeat yourself.",
+            "All paths curve inward.",
+            "Fear leaves fingerprints."
+        ]),
+        random.choice([
+            "This is where it breaks.",
+            "You will slow.",
+            "You will remain.",
+            "You will be remembered."
+        ])
+    ])
+
+# =========================================================
+# ======================= ENTITIES ========================
+# =========================================================
+
+class Enemy:
+    def __init__(self, level):
+        self.rect = pygame.Rect(
+            random.randint(0, WIDTH - ENEMY_SIZE),
+            random.randint(0, HEIGHT - ENEMY_SIZE),
+            ENEMY_SIZE, ENEMY_SIZE
+        )
+        self.vx, self.vy = random.uniform(-1,1), random.uniform(-1,1)
+        self.memory = pygame.Vector2()
+        self.speed = 1.5 + level * 0.15
+        self.focus = min(0.05 + level * 0.01, 0.25)
+
+    def update(self, player, delta):
+        self.memory = self.memory.lerp(delta, self.focus)
+        dx = (player.centerx - self.rect.centerx) + self.memory.x * 20
+        dy = (player.centery - self.rect.centery) + self.memory.y * 20
+        d = math.hypot(dx, dy)
+        if d:
+            dx, dy = dx/d, dy/d
+        self.vx = self.vx*0.9 + dx*self.focus*2
+        self.vy = self.vy*0.9 + dy*self.focus*2
+        self.vx, self.vy = clamp(self.vx, self.vy, self.speed)
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+        self.rect.clamp_ip(screen.get_rect())
+
+class Boss:
+    def __init__(self, level):
+        self.rect = pygame.Rect(WIDTH//2 - 80, HEIGHT//2 - 80, 160, 160)
+        self.speed = 2 + level * 0.05
+        self.timer = 0
+
+    def update(self, player):
+        dx = player.centerx - self.rect.centerx
+        dy = player.centery - self.rect.centery
+        d = math.hypot(dx, dy)
+        if d:
+            dx, dy = dx/d, dy/d
+        self.rect.x += dx * self.speed
+        self.rect.y += dy * self.speed
+
+# =========================================================
+# ======================= GAME STATE ======================
+# =========================================================
+
+users = load_users()
+current_user = None
+state = "auth"  # auth, level_select, leaderboard, playing, game_over
+mode = "signin"
+
+email = username = password = ""
+error = ""
+
+player = pygame.Rect(WIDTH//2, HEIGHT//2, PLAYER_SIZE, PLAYER_SIZE)
+star = pygame.Rect(200, 200, STAR_SIZE, STAR_SIZE)
+
+enemies = []
+boss = None
+boss_dialogue = ""
+boss_intro_time = 0
+
+level = 1
+frames = 0
+last_pos = pygame.Vector2(player.center)
+
+cheat_detected = False
