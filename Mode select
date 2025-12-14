@@ -1,0 +1,5 @@
+draw("Select Mode", WIDTH//2, 100)
+draw("1. Single Player", WIDTH//2, 160)
+draw("2. Multiplayer", WIDTH//2, 200)
+draw("3. Ranked", WIDTH//2, 240)
+draw("Use 1-3 to select", WIDTH//2, 300)
