@@ -1,1 +1,6 @@
-
+# Check login for creator/mod
+if email in users:
+    u = users[email]
+    if u["role"] in ["creator", "mod"] and hash_password(password, u["salt"]) == u["password"]:
+        current_user = email
+        state = "creator_panel"
