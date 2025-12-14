@@ -1,0 +1,33 @@
+elif state == "social_link":
+    draw("Link Social Media Accounts", WIDTH//2, 60)
+    draw(f"1. YouTube: {users[current_user]['social']['youtube']}", WIDTH//2, 120)
+    draw(f"2. Discord: {users[current_user]['social']['discord']}", WIDTH//2, 160)
+    draw(f"3. Twitch: {users[current_user]['social']['twitch']}", WIDTH//2, 200)
+    draw("Type number to edit | ESC to go back", WIDTH//2, 260)
+    
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                state = "level_select"
+            elif event.unicode in "123":
+                field_map = {"1": "youtube", "2": "discord", "3": "twitch"}
+                edit_field = field_map[event.unicode]
+                edit_input = ""
+                editing = True
+                
+                while editing:
+                    screen.fill(BG)
+                    draw(f"Enter {edit_field} URL:", WIDTH//2, HEIGHT//2 - 40)
+                    draw(edit_input, WIDTH//2, HEIGHT//2)
+                    pygame.display.flip()
+                    
+                    for e in pygame.event.get():
+                        if e.type == pygame.KEYDOWN:
+                            if e.key == pygame.K_RETURN:
+                                users[current_user]["social"][edit_field] = edit_input
+                                save_users(users)
+                                editing = False
+                            elif e.key == pygame.K_BACKSPACE:
+                                edit_input = edit_input[:-1]
+                            else:
+                                edit_input += e.unicode
