@@ -1,0 +1,114 @@
+# ---------------- LEVEL SELECT ----------------
+            elif state == "level_select":
+                if event.key == pygame.K_l:
+                    state = "leaderboard"
+                elif event.key == pygame.K_RETURN:
+                    level = users[current_user]["max_level"] * 5
+                    enemies.clear()
+                    boss = None
+                    cheat_detected = False
+                    frames = 0
+                    state = "playing"
+
+            # ---------------- LEADERBOARD ----------------
+            elif state == "leaderboard":
+                state = "level_select"
+
+            # ---------------- GAME OVER ----------------
+            elif state == "game_over":
+                if not cheat_detected:
+                    users[current_user]["best_run"] = max(
+                        users[current_user]["best_run"], level
+                    )
+                    save_users(users)
+                state = "level_select"
+
+    # ================= DRAW =================
+    screen.fill(BG)
+
+    if state == "auth":
+        draw("Drift in the Dark", WIDTH//2, 60)
+        draw(mode.upper(), WIDTH//2, 110)
+        draw(f"Email: {email}", WIDTH//2, 170)
+        if mode == "signup":
+            draw(f"Username: {username}", WIDTH//2, 200)
+        draw(f"Password: {'*'*len(password)}", WIDTH//2, 230)
+        draw("Enter | Tab to switch", WIDTH//2, 320)
+        if error: draw(error, WIDTH//2, 360)
+
+    elif state == "level_select":
+        u = users[current_user]
+        draw(f"Welcome, {u['username']}", WIDTH//2, 80)
+        draw(f"Checkpoint: {u['max_level']*5}", WIDTH//2, 130)
+        draw("Enter to play", WIDTH//2, 200)
+        draw("L for Leaderboard", WIDTH//2, 240)
+
+    elif state == "leaderboard":
+        draw("Leaderboard", WIDTH//2, 60)
+        board = sorted(
+            [(v["username"], v["best_run"]) for k,v in users.items() if k != "_meta"],
+            key=lambda x: x[1], reverse=True
+        )
+        for i,(n,s) in enumerate(board[:8]):
+            draw(f"{i+1}. {n} — Level {s}", WIDTH//2, 120+i*30)
+        draw("Press any key", WIDTH//2, 430)
+
+    elif state == "playing":
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]: player.x -= PLAYER_SPEED
+        if keys[pygame.K_RIGHT]: player.x += PLAYER_SPEED
+        if keys[pygame.K_UP]: player.y -= PLAYER_SPEED
+        if keys[pygame.K_DOWN]: player.y += PLAYER_SPEED
+        player.clamp_ip(screen.get_rect())
+
+        delta = pygame.Vector2(player.center) - last_pos
+        last_pos = pygame.Vector2(player.center)
+
+        if delta.length() > MAX_SPEED_TOLERANCE:
+            cheat_detected = True
+
+        frames += 1
+        if frames % 600 == 0:
+            level += 1
+            if level % 10 == 0:
+                boss = Boss(level)
+                boss_dialogue = generate_boss_dialogue()
+                boss_intro_time = pygame.time.get_ticks()
+                enemies.clear()
+            else:
+                enemies.append(Enemy(level))
+            if level % 5 == 0:
+                users[current_user]["max_level"] = max(
+                    users[current_user]["max_level"], level // 5
+                )
+
+        for e in enemies:
+            e.update(player, delta)
+            if e.rect.colliderect(player):
+                state = "game_over"
+
+        if boss:
+            boss.update(player)
+            if boss.rect.colliderect(player):
+                state = "game_over"
+            if pygame.time.get_ticks() - boss_intro_time > 15000:
+                boss = None
+                level += 1
+
+        pygame.draw.rect(screen, PLAYER_COLOR, player)
+        pygame.draw.rect(screen, STAR_COLOR, star)
+        for e in enemies:
+            pygame.draw.rect(screen, ENEMY_COLOR, e.rect)
+        if boss:
+            pygame.draw.rect(screen, BOSS_COLOR, boss.rect)
+            if pygame.time.get_ticks() - boss_intro_time < 3000:
+                draw(boss_dialogue, WIDTH//2, HEIGHT//2 - 140)
+
+        draw(f"Level {level}", 10, 10, False)
+
+    elif state == "game_over":
+        draw("The dark remembers only truth", WIDTH//2, HEIGHT//2 - 20)
+        draw("Press any key", WIDTH//2, HEIGHT//2 + 40)
+
+    pygame.display.flip()
+    clock.tick(60)
