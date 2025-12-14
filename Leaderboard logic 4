@@ -1,0 +1,14 @@
+if state == "game_over":
+    if not cheat_detected:
+        # Increment wins if player survived Ranked or met condition
+        users[current_user]["stats"]["wins"] += 1
+        # Swap leaderboard spot if in Ranked Mode (as before)
+        if ranked_match:
+            for o in opponents:
+                if level > o["best_run"] and o["best_run"] - level <= 10:
+                    users[current_user]["best_run"], o["best_run"] = o["best_run"], level
+                    break
+    else:
+        users[current_user]["stats"]["losses"] += 1
+
+    save_users(users)
