@@ -1,0 +1,16 @@
+def get_ranked_opponents(current_user_email):
+    # Exclude metadata and banned users
+    valid_users = [u for k,u in users.items() if k != "_meta" and not u.get("banned", False)]
+    
+    # Sort users by best_run (descending)
+    sorted_users = sorted(valid_users, key=lambda u: u["best_run"], reverse=True)
+    
+    # Find position of current player
+    current_score = users[current_user_email]["best_run"]
+    
+    # Find closest users
+    closest = sorted(sorted_users, key=lambda u: abs(u["best_run"] - current_score))
+    
+    # Return top 3 closest opponents (excluding self)
+    opponents = [u for u in closest if u["username"] != users[current_user_email]["username"]][:3]
+    return opponents
