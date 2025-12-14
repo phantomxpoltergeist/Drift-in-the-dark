@@ -1,0 +1,70 @@
+import pygame, sys, random, math, json, hashlib, os, time, secrets
+
+# ================= Pygame Setup =================
+pygame.init()
+WIDTH, HEIGHT = 640, 480
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Drift in the Dark")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 28)
+
+# ================= Colors =================
+BG = (15, 15, 25)
+TEXT = (220, 220, 240)
+PLAYER_COLOR = (200, 200, 255)
+STAR_COLOR = (255, 220, 120)
+ENEMY_COLOR = (200, 80, 80)
+BOSS_COLOR = (140, 60, 160)
+POWERUP_COLORS = {"speed": (0,255,0), "shield": (0,0,255), "score": (255,215,0)}
+
+# ================= Constants =================
+PLAYER_SIZE = 40
+PLAYER_SPEED = 5
+ENEMY_SIZE = 35
+STAR_SIZE = 20
+MAX_SPEED_TOLERANCE = PLAYER_SPEED * 1.6
+
+DATA_FILE = "users.json"
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_TIME = 30
+MIN_PASSWORD_LEN = 6
+MAX_INPUT_LEN = 32
+
+# ================= User Management =================
+def load_users():
+    if not os.path.exists(DATA_FILE):
+        return {}
+    try:
+        with open(DATA_FILE,"r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_users(users):
+    with open(DATA_FILE,"w") as f:
+        json.dump(users,f,indent=2)
+
+def hash_password(password, salt):
+    return hashlib.sha256((salt+password).encode()).hexdigest()
+
+def valid_input(text):
+    return text.isprintable() and len(text)<=MAX_INPUT_LEN
+
+def now():
+    return int(time.time())
+
+users = load_users()
+current_user = None
+
+# ================= Helper Functions =================
+def draw(text,x,y,center=True):
+    surf = font.render(text,True,TEXT)
+    rect = surf.get_rect()
+    rect.center = (x,y) if center else rect.move(x,y)
+    screen.blit(surf,rect)
+
+def clamp(vx,vy,m):
+    mag = math.hypot(vx,vy)
+    if mag==0: return 0,0
+    s = min(1,m/mag)
+    return vx*s, vy*s
