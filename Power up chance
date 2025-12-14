@@ -1,0 +1,5 @@
+powerups = []
+
+# In your game loop, e.g., during state == "playing"
+if random.random() < 0.01:  # 1% chance per frame
+    powerups.append(PowerUp())
