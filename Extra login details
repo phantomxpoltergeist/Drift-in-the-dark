@@ -1,0 +1,77 @@
+# =========================================================
+# ======================= MAIN LOOP =======================
+# =========================================================
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit(); sys.exit()
+
+        if event.type == pygame.KEYDOWN:
+
+            # ---------------- AUTH ----------------
+            if state == "auth":
+                if event.key == pygame.K_TAB:
+                    mode = "signup" if mode == "signin" else "signin"
+                    email = username = password = ""
+                    error = ""
+
+                elif event.key == pygame.K_RETURN:
+                    if not valid_input(email) or not valid_input(password):
+                        error = "Invalid input"
+                        continue
+
+                    users.setdefault("_meta", {})
+                    attempts = users["_meta"].get(email, {"tries":0,"lock":0})
+
+                    if attempts["lock"] > now():
+                        error = "Too many attempts"
+                        continue
+
+                    if mode == "signup":
+                        if len(password) < MIN_PASSWORD_LEN:
+                            error = "Password too short"
+                        elif email in users:
+                            error = "Account exists"
+                        else:
+                            salt = secrets.token_hex(16)
+                            users[email] = {
+                                "username": username or email.split("@")[0],
+                                "salt": salt,
+                                "password": hash_password(password, salt),
+                                "max_level": 1,
+                                "best_run": 0
+                            }
+                            save_users(users)
+                            current_user = email
+                            state = "level_select"
+
+                    else:
+                        if email not in users:
+                            error = "Invalid login"
+                        else:
+                            u = users[email]
+                            if hash_password(password, u["salt"]) == u["password"]:
+                                current_user = email
+                                users["_meta"][email] = {"tries":0,"lock":0}
+                                state = "level_select"
+                            else:
+                                attempts["tries"] += 1
+                                if attempts["tries"] >= MAX_LOGIN_ATTEMPTS:
+                                    attempts["lock"] = now() + LOCKOUT_TIME
+                                users["_meta"][email] = attempts
+                                error = "Invalid login"
+
+                    email = username = password = ""
+
+                elif event.key == pygame.K_BACKSPACE:
+                    if password: password = password[:-1]
+                    elif username: username = username[:-1]
+                    elif email: email = email[:-1]
+                else:
+                    if not email:
+                        email += event.unicode
+                    elif mode == "signup" and not username:
+                        username += event.unicode
+                    else:
+                        password += event.unicode
