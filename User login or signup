@@ -1,0 +1,33 @@
+import pygame, sys, random, math, json, hashlib, os, time, secrets
+
+# =========================================================
+# ===================== USER SAFETY =======================
+# =========================================================
+
+DATA_FILE = "users.json"
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_TIME = 30  # seconds
+MIN_PASSWORD_LEN = 6
+MAX_INPUT_LEN = 32
+
+def load_users():
+    if not os.path.exists(DATA_FILE):
+        return {}
+    try:
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_users(users):
+    with open(DATA_FILE, "w") as f:
+        json.dump(users, f, indent=2)
+
+def hash_password(password, salt):
+    return hashlib.sha256((salt + password).encode()).hexdigest()
+
+def valid_input(text):
+    return text.isprintable() and len(text) <= MAX_INPUT_LEN
+
+def now():
+    return int(time.time())
