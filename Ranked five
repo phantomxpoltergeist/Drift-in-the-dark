@@ -1,0 +1,12 @@
+if state == "game_over":
+    if not cheat_detected:
+        # Update best run for normal modes
+        users[current_user]["best_run"] = max(users[current_user]["best_run"], level)
+        
+        # Check if this was a ranked match
+        if ranked_match:  # A flag set when starting Ranked Mode
+            opponent_score = top_opponent["best_run"]
+            player_score = level
+            # If player beat the opponent, swap their leaderboard positions
+            if player_score > opponent_score:
+                users[current_user]["best_run"], top_opponent["best_run"] = opponent_score, player_score
