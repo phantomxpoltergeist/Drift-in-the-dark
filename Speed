@@ -1,0 +1,4 @@
+for p in powerups:
+    color_map = {"speed": (0,255,0), "shield": (0,0,255), "score": (255,215,0)}
+    pygame.draw.rect(screen, color_map[p.kind], p.rect)
+    draw(f"L{p.level}", p.rect.centerx, p.rect.centery, center=True)
