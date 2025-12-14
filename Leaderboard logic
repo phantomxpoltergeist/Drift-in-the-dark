@@ -1,0 +1,20 @@
+users[email] = {
+    "username": username or email.split("@")[0],
+    "salt": salt,
+    "password": hash_password(password, salt),
+    "max_level": 1,
+    "best_run": 0,
+    "ip": "127.0.0.1",
+    "banned": False,
+    "role": "user",  # user, creator, mod
+    "social": {
+        "youtube": "",
+        "discord": "",
+        "twitch": ""
+    },
+    "stats": {
+        "wins": 0,
+        "losses": 0,
+        "time_played": 0  # in seconds
+    }
+}
