@@ -1,0 +1,6 @@
+player_state = {"speed": PLAYER_SPEED, "speed_timer": 0, "shield": False, "shield_strength": 0, "score": 0}
+
+for p in powerups:
+    if p.rect.colliderect(player):
+        p.apply(player_state)
+        powerups.remove(p)
