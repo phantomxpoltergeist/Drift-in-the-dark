@@ -1,0 +1,48 @@
+creator_state = "main"  # main, user_menu, search, manage_mods
+selected_user = None
+
+elif creator_state == "main":
+    draw("Creator Panel", WIDTH//2, 60)
+    draw("1. User Menu", WIDTH//2, 120)
+    draw("2. Manage Mods", WIDTH//2, 160)
+    draw("Q. Quit to Auth", WIDTH//2, 200)
+    
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_1]:
+        creator_state = "user_menu"
+    elif keys[pygame.K_2]:
+        creator_state = "manage_mods"
+    elif keys[pygame.K_q]:
+        state = "auth"
+        auth_type = None
+
+elif creator_state == "manage_mods":
+    draw("Manage Moderators", WIDTH//2, 60)
+    draw("Type to search users | Enter to toggle mod | ESC to go back", WIDTH//2, 100)
+    
+    # Filter users (like user menu)
+    filtered_users = [u for k,u in users.items() if k != "_meta" and search_query.lower() in u["username"].lower()]
+    
+    y = 140
+    for idx, u in enumerate(filtered_users):
+        draw(f"{idx+1}. {u['username']} — Role: {u['role']}", WIDTH//2, y)
+        y += 30
+
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                creator_state = "main"
+            elif event.unicode.isdigit():
+                num = int(event.unicode) - 1
+                if 0 <= num < len(filtered_users):
+                    u = filtered_users[num]
+                    # Only allow toggling mod role for normal users
+                    if u["role"] == "user":
+                        u["role"] = "mod"
+                    elif u["role"] == "mod":
+                        u["role"] = "user"
+                    save_users(users)
+            elif event.key == pygame.K_BACKSPACE:
+                search_query = search_query[:-1]
+            elif len(event.unicode) == 1 and event.unicode.isprintable():
+                search_query += event.unicode
